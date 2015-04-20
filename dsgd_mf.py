@@ -6,10 +6,12 @@ import operator
 import sys
 
 
+# used for labeling the id on row in W in parallel
 def labelkeyRow(x):
 	global sizePerRowBlock
 	return x[0]/sizePerRowBlock
 
+# used for labeling the id on column in H in parallel
 def labelkeyCol(arg,x):
 	global sizePerColBlock
 	global blockSize
@@ -19,6 +21,7 @@ def labelkeyCol(arg,x):
 	else:
 		return pid
 
+# running SGD algorithm
 def dsgd(nowIter,iterator):
 	i=0
 	partW = {}
@@ -67,6 +70,7 @@ def dsgd(nowIter,iterator):
 def summ(ele,ele2):
 	return ele-ele2
 
+# parsing data with csv format
 def preprocessMapSubSampling (x):
 	val = x.split('\n')
 	for row in val:
@@ -74,6 +78,7 @@ def preprocessMapSubSampling (x):
 		if len(rowSplit)>1:
 			yield [rowSplit[0], rowSplit[1], rowSplit[2]]
 
+# parsing data with netflix data format
 def preprocessMap (x):
 	keyValuePair = x.split(':')
 	ValueSplit = keyValuePair[1].split('\n')
@@ -101,6 +106,8 @@ dictCol = {}
 V = {}
 sc = SparkContext("local", "Simple App")
 txtFile = sc.wholeTextFiles(inputV)
+
+# preprocssing data into rdd
 xt = txtFile.values().flatMap(preprocessMapSubSampling).collect()
 
 dictRowCount = {}
@@ -137,6 +144,7 @@ W = {}
 H = {}
 inilist = []
 
+#initialize W and H
 for y in range(0,maxRow+1):
 	inilist = []
 	for i in range(factors):
@@ -160,6 +168,8 @@ if (colSize%blockSize!=0):
 totalIter = 0
 
 reconErrorList =[]
+
+# start to run DSGD-MF
 for numOfIteration in range(0,numIter):
 	for k2 in range(0,blockSize): 
 		rddRow = sc.parallelize(W.items(),blockSize).keyBy(labelkeyRow)
@@ -182,6 +192,8 @@ for numOfIteration in range(0,numIter):
 		val = V[key] - np.dot(W[int(y)],H[int(x)]) 
 		loss = loss + val * val
 	reconErrorList.append(loss/len(V))
+
+# sorted data for outputing the model of W, H 
 sorted_w = sorted(W.items(),key = operator.itemgetter(0))
 sorted_h = sorted(H.items(),key = operator.itemgetter(0))
 
@@ -194,6 +206,7 @@ for pair in sorted_w:
 	t+=1
 
 fw.close()
+
 fh = open (fhFileName,'w')
 t=0
 strlist = []
@@ -206,6 +219,7 @@ for pair in sorted_h:
 			strlist[it]+=str(num)+","
 			it+=1			
 	t+=1
+
 for it in range(0,factors):
 	fh.write(strlist[it][:-1]+'\n')
 
@@ -216,4 +230,3 @@ elapsed = end - start
 
 print "timeUsed"
 print elapsed
-
