@@ -5,6 +5,9 @@ This algorithm is based on "Large-Scale Matrix Factorization with Distributed St
 To execute the program
 
 	>> ./bin/spark-submit numOfFactors numOfWorkers numOfIterations beta lambda training_data outputRowModel outputColumnModel
-	>> ./bin/spark-submit 20 3 100 0.6 0.1 nf_subsampling.csv w.csv h.csv
+
+For example,
+
+	>> ./bin/spark-submit 20 3 100 0.6 0.1 nf_subsample.csv w.csv h.csv
 
 All of the code had been successfully ran and tested on Spark 1.3.0.
